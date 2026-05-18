@@ -6,535 +6,348 @@
 <title>館山わかしお スイム分布</title>
 <style>
   :root {
-    --bg:     #071520;
-    --panel:  #0b1c30;
-    --panel2: #0e2238;
-    --border: #162e48;
-    --text:   #a8c8e0;
-    --accent: #4fc3f7;
-    --mono:   'Courier New', monospace;
+    --bg:    #071520;
+    --panel: #0b1c30;
+    --bdr:   #162e48;
+    --text:  #a8c8e0;
+    --ac:    #4fc3f7;
+    --mono:  'Courier New', monospace;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Helvetica Neue', Arial, sans-serif; overflow: hidden; }
- 
-  /* ── Layout ── */
-  .layout {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    height: 100dvh;  /* dynamic viewport height for mobile */
+  html, body { background: var(--bg); color: var(--text); font-family: 'Helvetica Neue', Arial, sans-serif; overflow: hidden; height: 100%; }
+
+  /* 全要素を絶対配置でJS制御 */
+  #hdr {
+    position: fixed; top: 0; left: 0; right: 0;
+    background: var(--panel); border-bottom: 1px solid var(--bdr);
+    padding: 7px 14px; z-index: 10;
   }
- 
-  /* Header */
-  .hdr {
-    background: var(--panel);
-    border-bottom: 1px solid var(--border);
-    padding: 8px 14px;
-    flex-shrink: 0;
-  }
-  .hdr-title { font-size: 12px; font-weight: 700; color: var(--accent); letter-spacing: 0.05em; }
-  .hdr-sub   { font-size: 10px; color: #3a6a8a; margin-top: 1px; }
- 
-  /* Canvas */
-  .canvas-wrap {
-    flex: 1;
-    min-height: 0;
-    position: relative;
+  #hdr h1 { font-size: 12px; font-weight: 700; color: var(--ac); letter-spacing: 0.05em; }
+  #hdr p  { font-size: 10px; color: #3a6a8a; margin-top: 1px; }
+
+  #canvasWrap {
+    position: fixed; left: 0; right: 0;
     background: var(--bg);
   }
   canvas { display: block; width: 100%; height: 100%; touch-action: none; }
- 
-  /* Bottom panel */
-  .bottom {
-    background: var(--panel);
-    border-top: 1px solid var(--border);
-    flex-shrink: 0;
+
+  #bottom {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    background: var(--panel); border-top: 1px solid var(--bdr);
     overflow-y: auto;
-    max-height: 46vh;
   }
- 
-  /* Time + stats row */
+
+  /* Stats */
   .stats-row {
-    display: flex;
-    align-items: center;
-    padding: 8px 14px 6px;
-    gap: 0;
-    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 7px 14px 5px; border-bottom: 1px solid var(--bdr); gap: 0;
   }
   .time-big {
-    font-family: var(--mono);
-    font-size: 34px;
-    color: var(--accent);
-    letter-spacing: 0.04em;
-    line-height: 1;
-    margin-right: 18px;
+    font-family: var(--mono); font-size: 30px; color: var(--ac);
+    letter-spacing: 0.04em; line-height: 1; margin-right: 16px; flex-shrink: 0;
   }
-  .stats-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 2px 10px;
-    flex: 1;
-  }
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; flex: 1; gap: 1px 8px; }
   .stat-item { text-align: center; }
   .stat-label { font-size: 9px; color: #2e5a78; display: block; }
-  .stat-val   { font-size: 18px; font-weight: 700; color: #fff; font-family: var(--mono); display: block; line-height: 1.1; }
- 
+  .stat-val { font-size: 16px; font-weight: 700; color: #fff; font-family: var(--mono); display: block; }
+
+  /* Progress */
+  .prog-wrap { padding: 6px 14px 5px; border-bottom: 1px solid var(--bdr); }
+  .prog-labels { display: flex; justify-content: space-between; font-size: 9px; color: #2e5a78; margin-bottom: 3px; }
+  .prog-bar { width: 100%; height: 8px; background: #102236; border-radius: 4px; cursor: pointer; }
+  .prog-fill { height: 100%; background: var(--ac); border-radius: 4px; pointer-events: none; }
+
   /* Controls */
-  .controls {
-    padding: 8px 14px 6px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
-  }
-  .btn-row { display: flex; gap: 8px; }
+  .ctrl-wrap { padding: 7px 14px 5px; border-bottom: 1px solid var(--bdr); display: flex; flex-direction: column; gap: 6px; }
+  .btn-row { display: flex; gap: 7px; }
   button {
-    flex: 1;
-    padding: 11px 8px;
-    background: #102236;
-    border: 1px solid #1a3a58;
-    color: var(--text);
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    transition: background 0.12s;
+    flex: 1; padding: 10px 6px;
+    background: #102236; border: 1px solid #1a3a58;
+    color: var(--text); border-radius: 6px; cursor: pointer;
+    font-size: 14px; font-weight: 600; transition: background 0.1s;
     touch-action: manipulation;
   }
   button:active { background: #1e3a5c; }
-  #btnPlay { color: #fff; background: #1a3a58; }
- 
-  .spd-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .spd-row label { color: #3a6a8a; font-size: 11px; white-space: nowrap; margin-right: 2px; }
+  #btnPlay { background: #1a3a58; color: #fff; }
+
+  .spd-row { display: flex; align-items: center; gap: 5px; }
+  .spd-label { font-size: 11px; color: #3a6a8a; white-space: nowrap; }
   .spd-btn {
-    flex: 1;
-    padding: 9px 4px;
-    background: #102236;
-    border: 1px solid #1a3a58;
-    color: #7ab0d0;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 600;
-    font-family: var(--mono);
-    letter-spacing: 0.02em;
-    transition: background 0.12s, color 0.12s, border-color 0.12s;
-    touch-action: manipulation;
-    text-align: center;
+    flex: 1; padding: 8px 2px; text-align: center;
+    background: #102236; border: 1px solid #1a3a58;
+    color: #7ab0d0; border-radius: 6px; cursor: pointer;
+    font-size: 13px; font-weight: 700; font-family: var(--mono);
+    touch-action: manipulation; transition: all 0.1s;
   }
-  .spd-btn:active { background: #1e3a5c; }
-  .spd-btn.active {
-    background: #1a3a58;
-    border-color: var(--accent);
-    color: var(--accent);
-  }
- 
-  /* Progress */
-  .prog-wrap { padding: 0 14px 8px; border-bottom: 1px solid var(--border); }
-  .prog-labels { display: flex; justify-content: space-between; font-size: 9px; color: #2e5a78; margin-bottom: 4px; }
-  .prog-bar {
-    width: 100%; height: 8px;
-    background: #102236;
-    border-radius: 4px;
-    cursor: pointer;
-    position: relative;
-  }
-  .prog-fill {
-    height: 100%; background: var(--accent);
-    border-radius: 4px; pointer-events: none;
-    transition: width 0.1s;
-  }
- 
+  .spd-btn.on { background: #1a3a58; border-color: var(--ac); color: var(--ac); }
+
   /* Legend */
-  .leg-wrap { padding: 8px 14px 4px; }
-  .leg-title {
-    font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
-    color: #2e5a78; margin-bottom: 6px;
-    display: flex; align-items: center; justify-content: space-between; cursor: pointer;
+  .leg-wrap { padding: 6px 14px 8px; }
+  .leg-hd {
+    font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: #2e5a78; margin-bottom: 5px;
+    display: flex; justify-content: space-between; cursor: pointer;
   }
-  .leg-title span { font-size: 10px; }
-  .leg-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2px 8px;
-  }
+  .leg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px 6px; }
   .leg-item {
-    display: flex; align-items: center; gap: 7px;
-    font-size: 11px; padding: 4px 6px;
-    cursor: pointer; border-radius: 4px;
-    transition: opacity 0.18s;
-    touch-action: manipulation;
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; padding: 3px 5px; border-radius: 4px;
+    cursor: pointer; touch-action: manipulation; transition: opacity 0.15s;
   }
-  .leg-item:active { background: #102236; }
-  .leg-item.off { opacity: 0.28; }
-  .leg-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-  .leg-label { flex: 1; line-height: 1.2; }
+  .leg-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .leg-label { flex: 1; }
   .leg-cnt { font-family: var(--mono); font-size: 9px; color: #2e5a78; }
- 
-  /* Tablet / iPad (768px〜) */
-  @media (min-width: 640px) {
-    .layout { flex-direction: row; flex-wrap: wrap; }
-    .hdr { width: 100%; order: 0; flex-shrink: 0; }
-    .canvas-wrap {
-      order: 1; flex: 1;
-      /* ヘッダー高さ(約38px)を引いた残り全部 */
-      height: calc(100vh - 38px);
-      height: calc(100dvh - 38px);
-      min-height: 0;
-    }
-    .bottom {
-      order: 2; width: 240px; max-height: none;
-      height: calc(100vh - 38px);
-      height: calc(100dvh - 38px);
-      border-top: none; border-left: 1px solid var(--border);
-      overflow-y: auto;
-    }
-    .time-big { font-size: 28px; }
-    .stat-val  { font-size: 16px; }
-  }
+  .leg-item.off { opacity: 0.28; }
 </style>
 </head>
 <body>
-<div class="layout">
- 
-  <!-- Header -->
-  <div class="hdr">
-    <div class="hdr-title">館山わかしおトライアスロン 2024 — スイム分布</div>
-    <div class="hdr-sub">第15回 (2024.5.26) リザルトデータより速度分布再現 / STD・Sprint</div>
+
+<div id="hdr">
+  <h1>館山わかしおトライアスロン 2024 — スイム分布</h1>
+  <p>第15回 (2024.5.26) リザルトデータより速度分布再現 / STD・Sprint</p>
+</div>
+
+<div id="canvasWrap"><canvas id="c"></canvas></div>
+
+<div id="bottom">
+  <div class="stats-row">
+    <div class="time-big" id="tDisp">09:00</div>
+    <div class="stats-grid">
+      <div class="stat-item"><span class="stat-label">水中</span><span class="stat-val" id="sIn">0</span></div>
+      <div class="stat-item"><span class="stat-label">スタート済</span><span class="stat-val" id="sSt">0</span></div>
+      <div class="stat-item"><span class="stat-label">ゴール</span><span class="stat-val" id="sFn">0</span></div>
+    </div>
   </div>
- 
-  <!-- Canvas -->
-  <div class="canvas-wrap"><canvas id="c"></canvas></div>
- 
-  <!-- Bottom panel -->
-  <div class="bottom">
- 
-    <!-- Time + stats -->
-    <div class="stats-row">
-      <div class="time-big" id="tDisp">09:00</div>
-      <div class="stats-grid">
-        <div class="stat-item">
-          <span class="stat-label">水中</span>
-          <span class="stat-val" id="sIn">0</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">スタート済</span>
-          <span class="stat-val" id="sSt">0</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">ゴール</span>
-          <span class="stat-val" id="sFn">0</span>
-        </div>
-      </div>
+  <div class="prog-wrap">
+    <div class="prog-labels"><span>09:00</span><span>11:00</span><span>13:00</span><span>14:30</span></div>
+    <div class="prog-bar" id="progBar"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+  </div>
+  <div class="ctrl-wrap">
+    <div class="btn-row">
+      <button id="btnPlay">▶ 再生</button>
+      <button id="btnReset">↺ リセット</button>
     </div>
- 
-    <!-- Progress -->
-    <div class="prog-wrap" style="padding-top:8px">
-      <div class="prog-labels">
-        <span>09:00</span><span>11:00</span><span>13:00</span><span>14:30</span>
-      </div>
-      <div class="prog-bar" id="progBar">
-        <div class="prog-fill" id="progFill" style="width:0%"></div>
-      </div>
+    <div class="spd-row">
+      <span class="spd-label">速度</span>
+      <button class="spd-btn on" data-spd="10">10×</button>
+      <button class="spd-btn"    data-spd="30">30×</button>
+      <button class="spd-btn"    data-spd="60">60×</button>
+      <button class="spd-btn"    data-spd="120">120×</button>
     </div>
- 
-    <!-- Buttons + speed -->
-    <div class="controls">
-      <div class="btn-row">
-        <button id="btnPlay">▶ 再生</button>
-        <button id="btnReset">↺ リセット</button>
-      </div>
-      <div class="spd-row">
-        <label>速度</label>
-        <button class="spd-btn active" data-spd="10">10×</button>
-        <button class="spd-btn" data-spd="30">30×</button>
-        <button class="spd-btn" data-spd="60">60×</button>
-        <button class="spd-btn" data-spd="120">120×</button>
-      </div>
-    </div>
- 
-    <!-- Legend -->
-    <div class="leg-wrap">
-      <div class="leg-title" id="legToggle">
-        グループ表示切替
-        <span id="legArrow">▲</span>
-      </div>
-      <div class="leg-grid" id="legend"></div>
-    </div>
- 
-  </div><!-- /bottom -->
-</div><!-- /layout -->
- 
+  </div>
+  <div class="leg-wrap">
+    <div class="leg-hd" id="legHd">グループ表示切替 <span id="legArr">▲</span></div>
+    <div class="leg-grid" id="legend"></div>
+  </div>
+</div>
+
 <script>
-// ═══════════════════════════════════════════════
-//  HELPERS
-// ═══════════════════════════════════════════════
-const T  = (h,m,s=0) => h*3600 + m*60 + s;
+// ── Helpers
+const T  = (h,m,s=0) => h*3600+m*60+s;
 const HM = s => `${String(Math.floor(s/3600)).padStart(2,'0')}:${String(Math.floor((s%3600)/60)).padStart(2,'0')}`;
 const SIM_S = T(9,0), SIM_E = T(14,30);
 const LW = 620, LH = 520;
- 
-// ═══════════════════════════════════════════════
-//  COURSE — user-confirmed coordinates
-// ═══════════════════════════════════════════════
+
+// ── Layout: JS で高さを完全制御
+const hdrEl    = document.getElementById('hdr');
+const wrapEl   = document.getElementById('canvasWrap');
+const bottomEl = document.getElementById('bottom');
+const canvas   = document.getElementById('c');
+const ctx      = canvas.getContext('2d');
+
+function layout() {
+  const hdrH = hdrEl.offsetHeight;
+  const botH = bottomEl.offsetHeight;
+  const winH = window.innerHeight;
+  const winW = window.innerWidth;
+  const cvH  = Math.max(100, winH - hdrH - botH);
+
+  // canvasWrap を header の直下に配置
+  wrapEl.style.top    = hdrH + 'px';
+  wrapEl.style.height = cvH  + 'px';
+
+  // canvas の描画バッファサイズを一致させる
+  if (canvas.width !== winW || canvas.height !== cvH) {
+    canvas.width  = winW;
+    canvas.height = cvH;
+  }
+}
+
+window.addEventListener('resize', layout);
+window.addEventListener('orientationchange', () => setTimeout(layout, 200));
+
+// ── Course (user-confirmed coords, logical 620×520)
 const WP = [
-  [308, 453],  // Start / Finish (地上ブイ)
-  [450, 150],  // 右ブイ (280m)
-  [323,  50],  // 奥右ブイ (最遠)
+  [308, 453],  // Start/Finish
+  [450, 150],  // 右ブイ 280m
+  [323,  50],  // 奥右ブイ
   [198, 148],  // 奥左ブイ
-  [308, 453],  // → Start
+  [308, 453],  // 閉じる
 ];
- 
+
 function buildSegs(pts) {
-  const segs = []; let cum = 0;
-  for (let i = 1; i < pts.length; i++) {
+  const segs=[]; let cum=0;
+  for (let i=1;i<pts.length;i++) {
     const dx=pts[i][0]-pts[i-1][0], dy=pts[i][1]-pts[i-1][1], d=Math.hypot(dx,dy);
     segs.push({x0:pts[i-1][0],y0:pts[i-1][1],x1:pts[i][0],y1:pts[i][1],d,cum});
-    cum += d;
+    cum+=d;
   }
   return {segs,total:cum};
 }
 const COURSE = buildSegs(WP);
- 
+
 function pathAt(t) {
-  const {segs,total} = COURSE;
-  const dist = Math.min(t*total, total-0.001);
+  const {segs,total}=COURSE, dist=Math.min(t*total,total-0.001);
   for (const s of segs) {
-    if (dist < s.cum+s.d) {
-      const f=(dist-s.cum)/s.d;
-      return [s.x0+f*(s.x1-s.x0), s.y0+f*(s.y1-s.y0)];
-    }
+    if (dist<s.cum+s.d) { const f=(dist-s.cum)/s.d; return [s.x0+f*(s.x1-s.x0),s.y0+f*(s.y1-s.y0)]; }
   }
   const l=segs[segs.length-1]; return [l.x1,l.y1];
 }
- 
-// ═══════════════════════════════════════════════
-//  GROUPS
-// ═══════════════════════════════════════════════
-const GROUPS = [
-  {id:'G1',  label:'STD ≤44歳',    cnt:223, start:T(9,15),  color:'#4caf50', avg:27*60, sd:4.0*60, laps:2},
-  {id:'G1g', label:'Guest',         cnt:4,   start:T(9,15),  color:'#a5d6a7', avg:25*60, sd:3.0*60, laps:2},
-  {id:'G2',  label:'STD 45-49歳',  cnt:85,  start:T(9,35),  color:'#42a5f5', avg:30*60, sd:4.5*60, laps:2},
-  {id:'G3',  label:'STD 50-54歳',  cnt:147, start:T(10,30), color:'#ffc107', avg:31*60, sd:5.0*60, laps:2},
-  {id:'G4',  label:'STD 55歳以上', cnt:176, start:T(11,0),  color:'#ef5350', avg:32*60, sd:5.0*60, laps:2},
-  {id:'G5',  label:'STD 女子',      cnt:72,  start:T(11,39), color:'#ff9800', avg:34*60, sd:5.5*60, laps:2},
-  {id:'G6',  label:'SP 男子',       cnt:159, start:T(12,35), color:'#90caf9', avg:14*60, sd:3.0*60, laps:1},
-  {id:'G7',  label:'SP 女子',       cnt:42,  start:T(12,49), color:'#f48fb1', avg:16*60, sd:3.5*60, laps:1},
-];
- 
-// ═══════════════════════════════════════════════
-//  SWIMMERS
-// ═══════════════════════════════════════════════
-function randn() {
-  let u,v; do{u=Math.random();}while(!u); do{v=Math.random();}while(!v);
-  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
-}
- 
-let swimmers=[];
-function buildSwimmers() {
-  swimmers=[];
-  for (const g of GROUPS) {
-    const waves=Math.ceil(g.cnt/10); let idx=0;
-    for (let w=0;w<waves;w++) {
-      const wCnt=Math.min(10,g.cnt-idx), wSt=g.start+w*10;
-      for (let i=0;i<wCnt;i++) {
-        const swimT=Math.max(g.avg*0.48, g.avg+randn()*g.sd);
-        swimmers.push({gid:g.id,color:g.color,start:wSt+Math.random()*1.2,swimT,laps:g.laps});
-        idx++;
-      }
-    }
-  }
-}
- 
-const waveEvts=[];
-function buildWaveEvts() {
-  for (const g of GROUPS) {
-    const waves=Math.ceil(g.cnt/10);
-    for (let w=0;w<waves;w++) {
-      const cnt=Math.min(10,g.cnt-w*10);
-      waveEvts.push({t:g.start+w*10,label:`${g.label} W${w+1}(${cnt})`,color:g.color});
-    }
-  }
-  waveEvts.sort((a,b)=>a.t-b.t);
-}
- 
-// ═══════════════════════════════════════════════
-//  CANVAS
-// ═══════════════════════════════════════════════
-const canvas=document.getElementById('c');
-const ctx=canvas.getContext('2d');
- 
-const wrap = canvas.parentElement;
- 
-function resize() {
-  const W   = window.innerWidth;
-  const H   = window.innerHeight;
-  const HDR = document.querySelector('.hdr').offsetHeight || 38;
-  const isWide = W >= 640;
- 
-  // キャンバス領域を画面サイズから直接計算
-  const cw = isWide ? W - 240 : W;
-  const ch = isWide ? H - HDR : Math.round((H - HDR) * 0.56);
- 
-  if (canvas.width !== cw || canvas.height !== ch) {
-    canvas.width  = cw;
-    canvas.height = ch;
-  }
-  // wrap にも明示的にサイズを設定（CSS に頼らない）
-  wrap.style.width  = cw + 'px';
-  wrap.style.height = ch + 'px';
-}
- 
-window.addEventListener('resize', resize);
-window.addEventListener('orientationchange', () => setTimeout(resize, 150));
- 
+
+// Logical → canvas px
 function sc([lx,ly]) {
   const sx=canvas.width/LW, sy=canvas.height/LH, s=Math.min(sx,sy);
   return [lx*s+(canvas.width-LW*s)/2, ly*s+(canvas.height-LH*s)/2];
 }
- 
-// ── Background
-function drawBG() {
+
+// ── Groups
+const GROUPS=[
+  {id:'G1', label:'STD ≤44歳',    cnt:223,start:T(9,15), color:'#4caf50',avg:27*60,sd:4.0*60,laps:2},
+  {id:'G1g',label:'Guest',         cnt:4,  start:T(9,15), color:'#a5d6a7',avg:25*60,sd:3.0*60,laps:2},
+  {id:'G2', label:'STD 45-49歳',  cnt:85, start:T(9,35), color:'#42a5f5',avg:30*60,sd:4.5*60,laps:2},
+  {id:'G3', label:'STD 50-54歳',  cnt:147,start:T(10,30),color:'#ffc107',avg:31*60,sd:5.0*60,laps:2},
+  {id:'G4', label:'STD 55歳以上', cnt:176,start:T(11,0), color:'#ef5350',avg:32*60,sd:5.0*60,laps:2},
+  {id:'G5', label:'STD 女子',      cnt:72, start:T(11,39),color:'#ff9800',avg:34*60,sd:5.5*60,laps:2},
+  {id:'G6', label:'SP 男子',       cnt:159,start:T(12,35),color:'#90caf9',avg:14*60,sd:3.0*60,laps:1},
+  {id:'G7', label:'SP 女子',       cnt:42, start:T(12,49),color:'#f48fb1',avg:16*60,sd:3.5*60,laps:1},
+];
+
+// ── Swimmers
+function randn(){let u,v;do{u=Math.random();}while(!u);do{v=Math.random();}while(!v);return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+
+let swimmers=[];
+function buildSwimmers(){
+  swimmers=[];
+  for(const g of GROUPS){
+    const waves=Math.ceil(g.cnt/10);let idx=0;
+    for(let w=0;w<waves;w++){
+      const wCnt=Math.min(10,g.cnt-idx),wSt=g.start+w*10;
+      for(let i=0;i<wCnt;i++){swimmers.push({gid:g.id,color:g.color,start:wSt+Math.random()*1.2,swimT:Math.max(g.avg*0.48,g.avg+randn()*g.sd),laps:g.laps});idx++;}
+    }
+  }
+}
+
+// ── Drawing
+function drawBG(){
   const g=ctx.createLinearGradient(0,0,0,canvas.height);
-  g.addColorStop(0,'#061520');
-  g.addColorStop(0.30,'#0b3a50');
-  g.addColorStop(0.62,'#0c4858');
-  g.addColorStop(0.76,'#184a28');
-  g.addColorStop(1,'#223818');
-  ctx.fillStyle=g; ctx.fillRect(0,0,canvas.width,canvas.height);
-  // Shimmer
-  ctx.save(); ctx.globalAlpha=0.04; ctx.strokeStyle='#7ee8fa'; ctx.lineWidth=1;
-  for (let y=8;y<canvas.height*0.75;y+=20) {
-    ctx.beginPath(); ctx.moveTo(0,y);
-    for (let x=0;x<=canvas.width;x+=6) ctx.lineTo(x,y+Math.sin(x*0.018+y*0.06)*2.5);
+  g.addColorStop(0,'#061520');g.addColorStop(0.30,'#0b3a50');
+  g.addColorStop(0.62,'#0c4858');g.addColorStop(0.76,'#184a28');g.addColorStop(1,'#223818');
+  ctx.fillStyle=g;ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.save();ctx.globalAlpha=0.04;ctx.strokeStyle='#7ee8fa';ctx.lineWidth=1;
+  for(let y=8;y<canvas.height*0.75;y+=20){
+    ctx.beginPath();ctx.moveTo(0,y);
+    for(let x=0;x<=canvas.width;x+=6)ctx.lineTo(x,y+Math.sin(x*0.018+y*0.06)*2.5);
     ctx.stroke();
   }
   ctx.restore();
-  // Shore
   const shY=canvas.height*0.795;
   const sg=ctx.createLinearGradient(0,shY-3,0,shY+10);
-  sg.addColorStop(0,'rgba(200,155,45,0)'); sg.addColorStop(0.5,'#c49030'); sg.addColorStop(1,'rgba(200,155,45,0)');
-  ctx.fillStyle=sg; ctx.fillRect(0,shY-3,canvas.width,13);
+  sg.addColorStop(0,'rgba(200,155,45,0)');sg.addColorStop(0.5,'#c49030');sg.addColorStop(1,'rgba(200,155,45,0)');
+  ctx.fillStyle=sg;ctx.fillRect(0,shY-3,canvas.width,13);
 }
- 
-// ── Arrow helper
-function arrowAt(ax,ay,bx,by,frac,sz) {
-  const mx=ax+frac*(bx-ax), my=ay+frac*(by-ay), ang=Math.atan2(by-ay,bx-ax);
-  ctx.save(); ctx.translate(mx,my); ctx.rotate(ang);
-  ctx.beginPath(); ctx.moveTo(sz,0); ctx.lineTo(-sz*0.55,sz*0.48); ctx.lineTo(-sz*0.55,-sz*0.48); ctx.closePath(); ctx.fill();
+
+function arrowAt(ax,ay,bx,by,f,sz){
+  const mx=ax+f*(bx-ax),my=ay+f*(by-ay),ang=Math.atan2(by-ay,bx-ax);
+  ctx.save();ctx.translate(mx,my);ctx.rotate(ang);
+  ctx.beginPath();ctx.moveTo(sz,0);ctx.lineTo(-sz*0.55,sz*0.48);ctx.lineTo(-sz*0.55,-sz*0.48);ctx.closePath();ctx.fill();
   ctx.restore();
 }
- 
-// ── Course
-function drawCourse() {
+
+function drawCourse(){
   const pts=WP.map(p=>sc(p));
   const [ps,p1,p2,p3]=pts;
- 
-  // Polygon tint
-  ctx.save(); ctx.globalAlpha=0.07;
-  ctx.beginPath(); ctx.moveTo(...ps); ctx.lineTo(...p1); ctx.lineTo(...p2); ctx.lineTo(...p3); ctx.closePath();
-  ctx.fillStyle='#4fc3f7'; ctx.fill(); ctx.restore();
- 
-  // Outline dashed
-  ctx.save(); ctx.setLineDash([9,6]); ctx.strokeStyle='rgba(100,210,255,0.52)'; ctx.lineWidth=2;
-  ctx.beginPath(); ctx.moveTo(...ps); ctx.lineTo(...p1); ctx.lineTo(...p2); ctx.lineTo(...p3); ctx.lineTo(...ps); ctx.stroke();
-  ctx.setLineDash([]); ctx.restore();
- 
-  // Arrows
+
+  ctx.save();ctx.globalAlpha=0.07;
+  ctx.beginPath();ctx.moveTo(...ps);ctx.lineTo(...p1);ctx.lineTo(...p2);ctx.lineTo(...p3);ctx.closePath();
+  ctx.fillStyle='#4fc3f7';ctx.fill();ctx.restore();
+
+  ctx.save();ctx.setLineDash([9,6]);ctx.strokeStyle='rgba(100,210,255,0.52)';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(...ps);ctx.lineTo(...p1);ctx.lineTo(...p2);ctx.lineTo(...p3);ctx.lineTo(...ps);ctx.stroke();
+  ctx.setLineDash([]);ctx.restore();
+
   ctx.fillStyle='rgba(78,195,247,0.72)';
-  for (const [a,b] of [[ps,p1],[p1,p2],[p2,p3],[p3,ps]]) {
-    arrowAt(a[0],a[1],b[0],b[1],0.35,8);
-    arrowAt(a[0],a[1],b[0],b[1],0.68,8);
-  }
- 
-  // Sea buoys
-  for (const [bx,by] of [p1,p2,p3]) {
+  for(const[a,b]of[[ps,p1],[p1,p2],[p2,p3],[p3,ps]]){arrowAt(a[0],a[1],b[0],b[1],0.35,8);arrowAt(a[0],a[1],b[0],b[1],0.68,8);}
+
+  for(const[bx,by]of[p1,p2,p3]){
     const gr=ctx.createRadialGradient(bx,by,1,bx,by,26);
-    gr.addColorStop(0,'rgba(255,214,0,0.42)'); gr.addColorStop(1,'rgba(255,214,0,0)');
-    ctx.beginPath(); ctx.arc(bx,by,26,0,Math.PI*2); ctx.fillStyle=gr; ctx.fill();
-    ctx.beginPath(); ctx.arc(bx,by,13,0,Math.PI*2);
-    ctx.fillStyle='#ffd500'; ctx.fill();
-    ctx.strokeStyle='rgba(255,255,255,0.7)'; ctx.lineWidth=1.5; ctx.stroke();
-    ctx.beginPath(); ctx.arc(bx-3,by-3,4.5,0,Math.PI*2);
-    ctx.fillStyle='rgba(255,255,255,0.35)'; ctx.fill();
+    gr.addColorStop(0,'rgba(255,214,0,0.42)');gr.addColorStop(1,'rgba(255,214,0,0)');
+    ctx.beginPath();ctx.arc(bx,by,26,0,Math.PI*2);ctx.fillStyle=gr;ctx.fill();
+    ctx.beginPath();ctx.arc(bx,by,13,0,Math.PI*2);ctx.fillStyle='#ffd500';ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.7)';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.beginPath();ctx.arc(bx-3,by-3,4.5,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,0.35)';ctx.fill();
   }
- 
-  // 280m label
-  const m1=[(ps[0]+p1[0])/2,(ps[1]+p1[1])/2], ang1=Math.atan2(p1[1]-ps[1],p1[0]-ps[0]);
-  ctx.save(); ctx.translate(m1[0],m1[1]); ctx.rotate(ang1);
-  ctx.font='bold 12px Helvetica Neue'; ctx.fillStyle='rgba(255,255,255,0.78)'; ctx.textAlign='center';
-  ctx.fillText('280m',0,-11); ctx.restore();
- 
-  // 95m annotation
+
+  const m1=[(ps[0]+p1[0])/2,(ps[1]+p1[1])/2],ang1=Math.atan2(p1[1]-ps[1],p1[0]-ps[0]);
+  ctx.save();ctx.translate(m1[0],m1[1]);ctx.rotate(ang1);
+  ctx.font='bold 12px Helvetica Neue';ctx.fillStyle='rgba(255,255,255,0.78)';ctx.textAlign='center';
+  ctx.fillText('280m',0,-11);ctx.restore();
+
   const m23=[(p2[0]+p3[0])/2,(p2[1]+p3[1])/2];
-  ctx.save();
-  ctx.strokeStyle='rgba(255,255,255,0.3)'; ctx.lineWidth=0.8; ctx.setLineDash([3,3]);
-  ctx.beginPath(); ctx.moveTo(p3[0],p3[1]-16); ctx.lineTo(p2[0],p2[1]-16); ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.font='10px Helvetica Neue'; ctx.fillStyle='rgba(255,255,255,0.62)'; ctx.textAlign='center';
-  ctx.fillText('95m',m23[0],Math.min(p2[1],p3[1])-20); ctx.restore();
- 
-  // STD/SP label
-  ctx.font='10px Helvetica Neue'; ctx.fillStyle='rgba(78,195,247,0.85)'; ctx.textAlign='center';
+  ctx.save();ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=0.8;ctx.setLineDash([3,3]);
+  ctx.beginPath();ctx.moveTo(p3[0],p3[1]-16);ctx.lineTo(p2[0],p2[1]-16);ctx.stroke();ctx.setLineDash([]);
+  ctx.font='10px Helvetica Neue';ctx.fillStyle='rgba(255,255,255,0.62)';ctx.textAlign='center';
+  ctx.fillText('95m',m23[0],Math.min(p2[1],p3[1])-20);ctx.restore();
+
+  ctx.font='10px Helvetica Neue';ctx.fillStyle='rgba(78,195,247,0.85)';ctx.textAlign='center';
   ctx.fillText('STD: 2周回  /  SP: 1周回',m23[0],Math.min(p2[1],p3[1])-34);
- 
-  // Start / Finish flag
-  const [sx,sy]=ps;
-  ctx.strokeStyle='rgba(255,255,255,0.88)'; ctx.lineWidth=2;
-  ctx.beginPath(); ctx.moveTo(sx,sy-6); ctx.lineTo(sx,sy-28); ctx.stroke();
+
+  const[sx,sy]=ps;
+  ctx.strokeStyle='rgba(255,255,255,0.88)';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(sx,sy-6);ctx.lineTo(sx,sy-28);ctx.stroke();
   ctx.fillStyle='#ef5350';
-  ctx.beginPath(); ctx.moveTo(sx,sy-28); ctx.lineTo(sx+15,sy-21); ctx.lineTo(sx,sy-14); ctx.fill();
-  ctx.beginPath(); ctx.arc(sx,sy,8,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
-  ctx.beginPath(); ctx.arc(sx,sy,4,0,Math.PI*2); ctx.fillStyle='#ef5350'; ctx.fill();
-  ctx.font='bold 11px Helvetica Neue'; ctx.fillStyle='rgba(255,255,255,0.88)'; ctx.textAlign='center';
-  ctx.fillText('START / FINISH',sx,sy+20); ctx.textAlign='left';
+  ctx.beginPath();ctx.moveTo(sx,sy-28);ctx.lineTo(sx+15,sy-21);ctx.lineTo(sx,sy-14);ctx.fill();
+  ctx.beginPath();ctx.arc(sx,sy,8,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
+  ctx.beginPath();ctx.arc(sx,sy,4,0,Math.PI*2);ctx.fillStyle='#ef5350';ctx.fill();
+  ctx.font='bold 11px Helvetica Neue';ctx.fillStyle='rgba(255,255,255,0.88)';ctx.textAlign='center';
+  ctx.fillText('START / FINISH',sx,sy+20);ctx.textAlign='left';
 }
- 
-// ── Swimmers
-function swimmerPos(s,now) {
-  if (now<s.start) return null;
+
+function swimmerPos(s,now){
+  if(now<s.start)return null;
   const el=now-s.start;
-  if (el>=s.swimT) return 'done';
+  if(el>=s.swimT)return'done';
   return pathAt((el/s.swimT*s.laps)%1);
 }
 const hidden=new Set();
-function drawSwimmers(now) {
+function drawSwimmers(now){
   let inW=0,stC=0,fnC=0;
-  for (const s of swimmers) {
-    if (hidden.has(s.gid)) continue;
+  for(const s of swimmers){
+    if(hidden.has(s.gid))continue;
     const p=swimmerPos(s,now);
-    if (!p) continue;
-    if (p==='done'){stC++;fnC++;continue;}
-    stC++; inW++;
-    const [px,py]=sc(p);
+    if(!p)continue;
+    if(p==='done'){stC++;fnC++;continue;}
+    stC++;inW++;
+    const[px,py]=sc(p);
     const gr=ctx.createRadialGradient(px,py,0,px,py,7);
-    gr.addColorStop(0,s.color+'bb'); gr.addColorStop(1,s.color+'00');
-    ctx.beginPath(); ctx.arc(px,py,7,0,Math.PI*2); ctx.fillStyle=gr; ctx.fill();
-    ctx.beginPath(); ctx.arc(px,py,2.5,0,Math.PI*2); ctx.fillStyle=s.color; ctx.fill();
+    gr.addColorStop(0,s.color+'bb');gr.addColorStop(1,s.color+'00');
+    ctx.beginPath();ctx.arc(px,py,7,0,Math.PI*2);ctx.fillStyle=gr;ctx.fill();
+    ctx.beginPath();ctx.arc(px,py,2.5,0,Math.PI*2);ctx.fillStyle=s.color;ctx.fill();
   }
-  return {inW,stC,fnC};
+  return{inW,stC,fnC};
 }
- 
-// ═══════════════════════════════════════════════
-//  SIM LOOP
-// ═══════════════════════════════════════════════
-let simT=SIM_S, playing=false, speed=30, lastMs=null;
- 
-function frame(ms) {
-  if (canvas.width === 0 || canvas.height === 0) { resize(); requestAnimationFrame(frame); return; }
-  if (playing && lastMs!==null) {
-    simT += (ms-lastMs)/1000*speed;
-    if (simT>=SIM_E) { simT=SIM_E; playing=false; btnPlay.textContent='▶ 再生'; }
+
+// ── Sim
+let simT=SIM_S,playing=false,speed=10,lastMs=null;
+
+function frame(ms){
+  if(playing&&lastMs!==null){
+    simT+=(ms-lastMs)/1000*speed;
+    if(simT>=SIM_E){simT=SIM_E;playing=false;btnPlay.textContent='▶ 再生';}
   }
   lastMs=ms;
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  drawBG(); drawCourse();
-  const {inW,stC,fnC}=drawSwimmers(simT);
+  drawBG();drawCourse();
+  const{inW,stC,fnC}=drawSwimmers(simT);
   document.getElementById('tDisp').textContent=HM(simT);
   document.getElementById('sIn').textContent=inW;
   document.getElementById('sSt').textContent=stC;
@@ -542,74 +355,54 @@ function frame(ms) {
   document.getElementById('progFill').style.width=Math.min(100,(simT-SIM_S)/(SIM_E-SIM_S)*100)+'%';
   requestAnimationFrame(frame);
 }
- 
-// ═══════════════════════════════════════════════
-//  CONTROLS
-// ═══════════════════════════════════════════════
+
+// ── Controls
 const btnPlay=document.getElementById('btnPlay');
 btnPlay.addEventListener('click',()=>{
-  playing=!playing;
-  btnPlay.textContent=playing?'⏸ 停止':'▶ 再生';
-  if (playing&&simT>=SIM_E) simT=SIM_S;
-  lastMs=null;
+  playing=!playing;btnPlay.textContent=playing?'⏸ 停止':'▶ 再生';
+  if(playing&&simT>=SIM_E)simT=SIM_S;lastMs=null;
 });
 document.getElementById('btnReset').addEventListener('click',()=>{
-  simT=SIM_S; playing=false; btnPlay.textContent='▶ 再生'; lastMs=null;
+  simT=SIM_S;playing=false;btnPlay.textContent='▶ 再生';lastMs=null;
 });
-// Speed buttons
-speed = 10; // default
-document.querySelectorAll('.spd-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    speed = +btn.dataset.spd;
-    document.querySelectorAll('.spd-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+document.querySelectorAll('.spd-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    speed=+btn.dataset.spd;
+    document.querySelectorAll('.spd-btn').forEach(b=>b.classList.remove('on'));
+    btn.classList.add('on');
   });
 });
- 
-// Progress bar — mouse + touch
-function seekTo(e) {
-  const bar=document.getElementById('progBar');
-  const r=bar.getBoundingClientRect();
+function seekTo(e){
+  const r=document.getElementById('progBar').getBoundingClientRect();
   const x=(e.touches?e.touches[0].clientX:e.clientX)-r.left;
-  simT=SIM_S+Math.max(0,Math.min(1,x/r.width))*(SIM_E-SIM_S);
-  lastMs=null;
+  simT=SIM_S+Math.max(0,Math.min(1,x/r.width))*(SIM_E-SIM_S);lastMs=null;
 }
 const pb=document.getElementById('progBar');
 pb.addEventListener('click',seekTo);
 pb.addEventListener('touchstart',e=>{e.preventDefault();seekTo(e);},{passive:false});
 pb.addEventListener('touchmove', e=>{e.preventDefault();seekTo(e);},{passive:false});
- 
-// Legend toggle
+
 let legOpen=true;
-document.getElementById('legToggle').addEventListener('click',()=>{
+document.getElementById('legHd').addEventListener('click',()=>{
   legOpen=!legOpen;
   document.getElementById('legend').style.display=legOpen?'grid':'none';
-  document.getElementById('legArrow').textContent=legOpen?'▲':'▼';
+  document.getElementById('legArr').textContent=legOpen?'▲':'▼';
 });
- 
-// ═══════════════════════════════════════════════
-//  LEGEND
-// ═══════════════════════════════════════════════
-function buildLegend() {
+
+// ── Legend
+function buildLegend(){
   const el=document.getElementById('legend');
-  for (const g of GROUPS) {
-    const d=document.createElement('div'); d.className='leg-item';
-    d.innerHTML=`<div class="leg-dot" style="background:${g.color}"></div>
-      <span class="leg-label">${g.label}</span>
-      <span class="leg-cnt">${g.cnt}</span>`;
-    d.addEventListener('click',()=>{
-      hidden.has(g.id)?hidden.delete(g.id):hidden.add(g.id);
-      d.classList.toggle('off');
-    });
+  for(const g of GROUPS){
+    const d=document.createElement('div');d.className='leg-item';
+    d.innerHTML=`<div class="leg-dot" style="background:${g.color}"></div><span class="leg-label">${g.label}</span><span class="leg-cnt">${g.cnt}</span>`;
+    d.addEventListener('click',()=>{hidden.has(g.id)?hidden.delete(g.id):hidden.add(g.id);d.classList.toggle('off');});
     el.appendChild(d);
   }
 }
- 
-// ═══════════════════════════════════════════════
-//  INIT
-// ═══════════════════════════════════════════════
-buildSwimmers(); buildWaveEvts(); buildLegend();
-resize(); // 初回サイズ設定
+
+// ── Init: layout → build → start
+buildSwimmers();buildLegend();
+layout();  // ← 先にレイアウト確定
 requestAnimationFrame(frame);
 </script>
 </body>
