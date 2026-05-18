@@ -35,6 +35,7 @@
     position: fixed; left: 0; right: 0; bottom: 0;
     background: var(--panel); border-top: 1px solid var(--bdr);
     overflow-y: auto;
+    /* 高さはJSで設定 */
   }
 
   /* Stats */
@@ -155,22 +156,20 @@ const bottomEl = document.getElementById('bottom');
 const canvas   = document.getElementById('c');
 const ctx      = canvas.getContext('2d');
 
+const BOT_H = 220; // 底部パネルの固定高さ（px）
+
 function layout() {
-  const hdrH = hdrEl.offsetHeight;
-  const botH = bottomEl.offsetHeight;
   const winH = window.innerHeight;
   const winW = window.innerWidth;
-  const cvH  = Math.max(100, winH - hdrH - botH);
+  const hdrH = hdrEl.offsetHeight || 38;
+  const cvH  = Math.max(120, winH - hdrH - BOT_H);
 
-  // canvasWrap を header の直下に配置
   wrapEl.style.top    = hdrH + 'px';
   wrapEl.style.height = cvH  + 'px';
+  bottomEl.style.height = BOT_H + 'px';
 
-  // canvas の描画バッファサイズを一致させる
-  if (canvas.width !== winW || canvas.height !== cvH) {
-    canvas.width  = winW;
-    canvas.height = cvH;
-  }
+  canvas.width  = winW;
+  canvas.height = cvH;
 }
 
 window.addEventListener('resize', layout);
@@ -382,7 +381,9 @@ pb.addEventListener('click',seekTo);
 pb.addEventListener('touchstart',e=>{e.preventDefault();seekTo(e);},{passive:false});
 pb.addEventListener('touchmove', e=>{e.preventDefault();seekTo(e);},{passive:false});
 
-let legOpen=true;
+let legOpen=false;
+document.getElementById('legend').style.display='none';
+document.getElementById('legArr').textContent='▼';
 document.getElementById('legHd').addEventListener('click',()=>{
   legOpen=!legOpen;
   document.getElementById('legend').style.display=legOpen?'grid':'none';
