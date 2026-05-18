@@ -16,7 +16,7 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Helvetica Neue', Arial, sans-serif; overflow: hidden; }
- 
+
   /* ── Layout ── */
   .layout {
     display: flex;
@@ -24,7 +24,7 @@
     height: 100vh;
     height: 100dvh;  /* dynamic viewport height for mobile */
   }
- 
+
   /* Header */
   .hdr {
     background: var(--panel);
@@ -34,7 +34,7 @@
   }
   .hdr-title { font-size: 12px; font-weight: 700; color: var(--accent); letter-spacing: 0.05em; }
   .hdr-sub   { font-size: 10px; color: #3a6a8a; margin-top: 1px; }
- 
+
   /* Canvas */
   .canvas-wrap {
     flex: 1;
@@ -43,7 +43,7 @@
     background: var(--bg);
   }
   canvas { display: block; width: 100%; height: 100%; touch-action: none; }
- 
+
   /* Bottom panel */
   .bottom {
     background: var(--panel);
@@ -52,7 +52,7 @@
     overflow-y: auto;
     max-height: 46vh;
   }
- 
+
   /* Time + stats row */
   .stats-row {
     display: flex;
@@ -78,7 +78,7 @@
   .stat-item { text-align: center; }
   .stat-label { font-size: 9px; color: #2e5a78; display: block; }
   .stat-val   { font-size: 18px; font-weight: 700; color: #fff; font-family: var(--mono); display: block; line-height: 1.1; }
- 
+
   /* Controls */
   .controls {
     padding: 8px 14px 6px;
@@ -104,7 +104,7 @@
   }
   button:active { background: #1e3a5c; }
   #btnPlay { color: #fff; background: #1a3a58; }
- 
+
   .spd-row {
     display: flex;
     align-items: center;
@@ -133,7 +133,7 @@
     border-color: var(--accent);
     color: var(--accent);
   }
- 
+
   /* Progress */
   .prog-wrap { padding: 0 14px 8px; border-bottom: 1px solid var(--border); }
   .prog-labels { display: flex; justify-content: space-between; font-size: 9px; color: #2e5a78; margin-bottom: 4px; }
@@ -149,7 +149,7 @@
     border-radius: 4px; pointer-events: none;
     transition: width 0.1s;
   }
- 
+
   /* Legend */
   .leg-wrap { padding: 8px 14px 4px; }
   .leg-title {
@@ -175,7 +175,7 @@
   .leg-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
   .leg-label { flex: 1; line-height: 1.2; }
   .leg-cnt { font-family: var(--mono); font-size: 9px; color: #2e5a78; }
- 
+
   /* Desktop override: side-by-side */
   @media (min-width: 640px) {
     .layout { flex-direction: row; flex-wrap: wrap; }
@@ -194,19 +194,19 @@
 </head>
 <body>
 <div class="layout">
- 
+
   <!-- Header -->
   <div class="hdr">
     <div class="hdr-title">館山わかしおトライアスロン 2024 — スイム分布</div>
     <div class="hdr-sub">第15回 (2024.5.26) リザルトデータより速度分布再現 / STD・Sprint</div>
   </div>
- 
+
   <!-- Canvas -->
   <div class="canvas-wrap"><canvas id="c"></canvas></div>
- 
+
   <!-- Bottom panel -->
   <div class="bottom">
- 
+
     <!-- Time + stats -->
     <div class="stats-row">
       <div class="time-big" id="tDisp">09:00</div>
@@ -225,7 +225,7 @@
         </div>
       </div>
     </div>
- 
+
     <!-- Progress -->
     <div class="prog-wrap" style="padding-top:8px">
       <div class="prog-labels">
@@ -235,7 +235,7 @@
         <div class="prog-fill" id="progFill" style="width:0%"></div>
       </div>
     </div>
- 
+
     <!-- Buttons + speed -->
     <div class="controls">
       <div class="btn-row">
@@ -250,7 +250,7 @@
         <button class="spd-btn" data-spd="120">120×</button>
       </div>
     </div>
- 
+
     <!-- Legend -->
     <div class="leg-wrap">
       <div class="leg-title" id="legToggle">
@@ -259,10 +259,10 @@
       </div>
       <div class="leg-grid" id="legend"></div>
     </div>
- 
+
   </div><!-- /bottom -->
 </div><!-- /layout -->
- 
+
 <script>
 // ═══════════════════════════════════════════════
 //  HELPERS
@@ -271,7 +271,7 @@ const T  = (h,m,s=0) => h*3600 + m*60 + s;
 const HM = s => `${String(Math.floor(s/3600)).padStart(2,'0')}:${String(Math.floor((s%3600)/60)).padStart(2,'0')}`;
 const SIM_S = T(9,0), SIM_E = T(14,30);
 const LW = 620, LH = 520;
- 
+
 // ═══════════════════════════════════════════════
 //  COURSE — user-confirmed coordinates
 // ═══════════════════════════════════════════════
@@ -282,7 +282,7 @@ const WP = [
   [198, 148],  // 奥左ブイ
   [308, 453],  // → Start
 ];
- 
+
 function buildSegs(pts) {
   const segs = []; let cum = 0;
   for (let i = 1; i < pts.length; i++) {
@@ -293,7 +293,7 @@ function buildSegs(pts) {
   return {segs,total:cum};
 }
 const COURSE = buildSegs(WP);
- 
+
 function pathAt(t) {
   const {segs,total} = COURSE;
   const dist = Math.min(t*total, total-0.001);
@@ -305,7 +305,7 @@ function pathAt(t) {
   }
   const l=segs[segs.length-1]; return [l.x1,l.y1];
 }
- 
+
 // ═══════════════════════════════════════════════
 //  GROUPS
 // ═══════════════════════════════════════════════
@@ -319,7 +319,7 @@ const GROUPS = [
   {id:'G6',  label:'SP 男子',       cnt:159, start:T(12,35), color:'#90caf9', avg:14*60, sd:3.0*60, laps:1},
   {id:'G7',  label:'SP 女子',       cnt:42,  start:T(12,49), color:'#f48fb1', avg:16*60, sd:3.5*60, laps:1},
 ];
- 
+
 // ═══════════════════════════════════════════════
 //  SWIMMERS
 // ═══════════════════════════════════════════════
@@ -327,7 +327,7 @@ function randn() {
   let u,v; do{u=Math.random();}while(!u); do{v=Math.random();}while(!v);
   return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
 }
- 
+
 let swimmers=[];
 function buildSwimmers() {
   swimmers=[];
@@ -343,7 +343,7 @@ function buildSwimmers() {
     }
   }
 }
- 
+
 const waveEvts=[];
 function buildWaveEvts() {
   for (const g of GROUPS) {
@@ -355,24 +355,24 @@ function buildWaveEvts() {
   }
   waveEvts.sort((a,b)=>a.t-b.t);
 }
- 
+
 // ═══════════════════════════════════════════════
 //  CANVAS
 // ═══════════════════════════════════════════════
 const canvas=document.getElementById('c');
 const ctx=canvas.getContext('2d');
- 
+
 function resize() {
   const w=canvas.offsetWidth, h=canvas.offsetHeight;
   if (w>0 && h>0) { canvas.width=w; canvas.height=h; }
 }
 window.addEventListener('resize', resize);
- 
+
 function sc([lx,ly]) {
   const sx=canvas.width/LW, sy=canvas.height/LH, s=Math.min(sx,sy);
   return [lx*s+(canvas.width-LW*s)/2, ly*s+(canvas.height-LH*s)/2];
 }
- 
+
 // ── Background
 function drawBG() {
   const g=ctx.createLinearGradient(0,0,0,canvas.height);
@@ -396,7 +396,7 @@ function drawBG() {
   sg.addColorStop(0,'rgba(200,155,45,0)'); sg.addColorStop(0.5,'#c49030'); sg.addColorStop(1,'rgba(200,155,45,0)');
   ctx.fillStyle=sg; ctx.fillRect(0,shY-3,canvas.width,13);
 }
- 
+
 // ── Arrow helper
 function arrowAt(ax,ay,bx,by,frac,sz) {
   const mx=ax+frac*(bx-ax), my=ay+frac*(by-ay), ang=Math.atan2(by-ay,bx-ax);
@@ -404,29 +404,29 @@ function arrowAt(ax,ay,bx,by,frac,sz) {
   ctx.beginPath(); ctx.moveTo(sz,0); ctx.lineTo(-sz*0.55,sz*0.48); ctx.lineTo(-sz*0.55,-sz*0.48); ctx.closePath(); ctx.fill();
   ctx.restore();
 }
- 
+
 // ── Course
 function drawCourse() {
   const pts=WP.map(p=>sc(p));
   const [ps,p1,p2,p3]=pts;
- 
+
   // Polygon tint
   ctx.save(); ctx.globalAlpha=0.07;
   ctx.beginPath(); ctx.moveTo(...ps); ctx.lineTo(...p1); ctx.lineTo(...p2); ctx.lineTo(...p3); ctx.closePath();
   ctx.fillStyle='#4fc3f7'; ctx.fill(); ctx.restore();
- 
+
   // Outline dashed
   ctx.save(); ctx.setLineDash([9,6]); ctx.strokeStyle='rgba(100,210,255,0.52)'; ctx.lineWidth=2;
   ctx.beginPath(); ctx.moveTo(...ps); ctx.lineTo(...p1); ctx.lineTo(...p2); ctx.lineTo(...p3); ctx.lineTo(...ps); ctx.stroke();
   ctx.setLineDash([]); ctx.restore();
- 
+
   // Arrows
   ctx.fillStyle='rgba(78,195,247,0.72)';
   for (const [a,b] of [[ps,p1],[p1,p2],[p2,p3],[p3,ps]]) {
     arrowAt(a[0],a[1],b[0],b[1],0.35,8);
     arrowAt(a[0],a[1],b[0],b[1],0.68,8);
   }
- 
+
   // Sea buoys
   for (const [bx,by] of [p1,p2,p3]) {
     const gr=ctx.createRadialGradient(bx,by,1,bx,by,26);
@@ -438,13 +438,13 @@ function drawCourse() {
     ctx.beginPath(); ctx.arc(bx-3,by-3,4.5,0,Math.PI*2);
     ctx.fillStyle='rgba(255,255,255,0.35)'; ctx.fill();
   }
- 
+
   // 280m label
   const m1=[(ps[0]+p1[0])/2,(ps[1]+p1[1])/2], ang1=Math.atan2(p1[1]-ps[1],p1[0]-ps[0]);
   ctx.save(); ctx.translate(m1[0],m1[1]); ctx.rotate(ang1);
   ctx.font='bold 12px Helvetica Neue'; ctx.fillStyle='rgba(255,255,255,0.78)'; ctx.textAlign='center';
   ctx.fillText('280m',0,-11); ctx.restore();
- 
+
   // 95m annotation
   const m23=[(p2[0]+p3[0])/2,(p2[1]+p3[1])/2];
   ctx.save();
@@ -453,11 +453,11 @@ function drawCourse() {
   ctx.setLineDash([]);
   ctx.font='10px Helvetica Neue'; ctx.fillStyle='rgba(255,255,255,0.62)'; ctx.textAlign='center';
   ctx.fillText('95m',m23[0],Math.min(p2[1],p3[1])-20); ctx.restore();
- 
+
   // STD/SP label
   ctx.font='10px Helvetica Neue'; ctx.fillStyle='rgba(78,195,247,0.85)'; ctx.textAlign='center';
   ctx.fillText('STD: 2周回  /  SP: 1周回',m23[0],Math.min(p2[1],p3[1])-34);
- 
+
   // Start / Finish flag
   const [sx,sy]=ps;
   ctx.strokeStyle='rgba(255,255,255,0.88)'; ctx.lineWidth=2;
@@ -469,7 +469,7 @@ function drawCourse() {
   ctx.font='bold 11px Helvetica Neue'; ctx.fillStyle='rgba(255,255,255,0.88)'; ctx.textAlign='center';
   ctx.fillText('START / FINISH',sx,sy+20); ctx.textAlign='left';
 }
- 
+
 // ── Swimmers
 function swimmerPos(s,now) {
   if (now<s.start) return null;
@@ -494,12 +494,12 @@ function drawSwimmers(now) {
   }
   return {inW,stC,fnC};
 }
- 
+
 // ═══════════════════════════════════════════════
 //  SIM LOOP
 // ═══════════════════════════════════════════════
 let simT=SIM_S, playing=false, speed=30, lastMs=null;
- 
+
 function frame(ms) {
   if (playing && lastMs!==null) {
     simT += (ms-lastMs)/1000*speed;
@@ -516,7 +516,7 @@ function frame(ms) {
   document.getElementById('progFill').style.width=Math.min(100,(simT-SIM_S)/(SIM_E-SIM_S)*100)+'%';
   requestAnimationFrame(frame);
 }
- 
+
 // ═══════════════════════════════════════════════
 //  CONTROLS
 // ═══════════════════════════════════════════════
@@ -539,7 +539,7 @@ document.querySelectorAll('.spd-btn').forEach(btn => {
     btn.classList.add('active');
   });
 });
- 
+
 // Progress bar — mouse + touch
 function seekTo(e) {
   const bar=document.getElementById('progBar');
@@ -552,7 +552,7 @@ const pb=document.getElementById('progBar');
 pb.addEventListener('click',seekTo);
 pb.addEventListener('touchstart',e=>{e.preventDefault();seekTo(e);},{passive:false});
 pb.addEventListener('touchmove', e=>{e.preventDefault();seekTo(e);},{passive:false});
- 
+
 // Legend toggle
 let legOpen=true;
 document.getElementById('legToggle').addEventListener('click',()=>{
@@ -560,7 +560,7 @@ document.getElementById('legToggle').addEventListener('click',()=>{
   document.getElementById('legend').style.display=legOpen?'grid':'none';
   document.getElementById('legArrow').textContent=legOpen?'▲':'▼';
 });
- 
+
 // ═══════════════════════════════════════════════
 //  LEGEND
 // ═══════════════════════════════════════════════
@@ -578,7 +578,7 @@ function buildLegend() {
     el.appendChild(d);
   }
 }
- 
+
 // ═══════════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════════
