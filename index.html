@@ -370,20 +370,28 @@ const canvas=document.getElementById('c');
 const ctx=canvas.getContext('2d');
  
 const wrap = canvas.parentElement;
+ 
 function resize() {
-  const w = wrap.clientWidth;
-  const h = wrap.clientHeight;
-  if (w > 0 && h > 0 && (canvas.width !== w || canvas.height !== h)) {
-    canvas.width  = w;
-    canvas.height = h;
+  const W   = window.innerWidth;
+  const H   = window.innerHeight;
+  const HDR = document.querySelector('.hdr').offsetHeight || 38;
+  const isWide = W >= 640;
+ 
+  // キャンバス領域を画面サイズから直接計算
+  const cw = isWide ? W - 240 : W;
+  const ch = isWide ? H - HDR : Math.round((H - HDR) * 0.56);
+ 
+  if (canvas.width !== cw || canvas.height !== ch) {
+    canvas.width  = cw;
+    canvas.height = ch;
   }
+  // wrap にも明示的にサイズを設定（CSS に頼らない）
+  wrap.style.width  = cw + 'px';
+  wrap.style.height = ch + 'px';
 }
-// ResizeObserver で親要素のサイズ変化を確実に検知
-if (window.ResizeObserver) {
-  new ResizeObserver(resize).observe(wrap);
-} else {
-  window.addEventListener('resize', resize);
-}
+ 
+window.addEventListener('resize', resize);
+window.addEventListener('orientationchange', () => setTimeout(resize, 150));
  
 function sc([lx,ly]) {
   const sx=canvas.width/LW, sy=canvas.height/LH, s=Math.min(sx,sy);
@@ -518,8 +526,7 @@ function drawSwimmers(now) {
 let simT=SIM_S, playing=false, speed=30, lastMs=null;
  
 function frame(ms) {
-  resize(); // キャンバスサイズを毎フレーム保証
-  if (canvas.width === 0 || canvas.height === 0) { requestAnimationFrame(frame); return; }
+  if (canvas.width === 0 || canvas.height === 0) { resize(); requestAnimationFrame(frame); return; }
   if (playing && lastMs!==null) {
     simT += (ms-lastMs)/1000*speed;
     if (simT>=SIM_E) { simT=SIM_E; playing=false; btnPlay.textContent='▶ 再生'; }
@@ -602,6 +609,7 @@ function buildLegend() {
 //  INIT
 // ═══════════════════════════════════════════════
 buildSwimmers(); buildWaveEvts(); buildLegend();
+resize(); // 初回サイズ設定
 requestAnimationFrame(frame);
 </script>
 </body>
