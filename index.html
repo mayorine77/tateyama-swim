@@ -203,18 +203,8 @@ function pathAt(t) {
   const l=segs[segs.length-1]; return [l.x1,l.y1];
 }
 
-// コース上の位置tにおける進行方向タンジェントを返す
-function pathTangent(t){
-  const{segs,total}=COURSE,dist=Math.min(t*total,total-0.001);
-  for(const s of segs){
-    if(dist<s.cum+s.d){
-      const len=s.d||1;
-      return[(s.x1-s.x0)/len,(s.y1-s.y0)/len];
-    }
-  }
-  const l=segs[segs.length-1],len=l.d||1;
-  return[(l.x1-l.x0)/len,(l.y1-l.y0)/len];
-}
+// コース重心（4ブイの平均）
+const CENTROID = [(308+450+323+198)/4, (453+150+50+148)/4]; // ≈(320, 200)
 
 function sc([lx,ly]) {
   const sx=canvas.width/LW, sy=canvas.height/LH, s=Math.min(sx,sy);
@@ -359,12 +349,13 @@ function drawSwimmers(now){
 
     // コース上の基準位置
     const[lx,ly]=pathAt(frac);
-    // 反時計回りコース → 右法線(ty,-tx)が外側
-    const[tx,ty]=pathTangent(frac);
-    const nx=ty, ny=-tx;
-    // 外側方向にlane分ずらした論理座標（内側・ブイ内には入らない）
-    const rx=lx+s.lane*nx;
-    const ry=ly+s.lane*ny;
+    // 重心から外側方向ベクトルを計算（ポリゴン内部には絶対入らない）
+    const dx=lx-CENTROID[0], dy=ly-CENTROID[1];
+    const dlen=Math.hypot(dx,dy)||1;
+    const ox=dx/dlen, oy=dy/dlen;
+    // 外側方向のみにlane分ずらした論理座標
+    const rx=lx+s.lane*ox;
+    const ry=ly+s.lane*oy;
     const[px,py]=sc([rx,ry]);
 
     // フラットな塗りつぶしドット（発光なし）
