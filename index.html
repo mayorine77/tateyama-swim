@@ -203,7 +203,19 @@ function pathAt(t) {
   const l=segs[segs.length-1]; return [l.x1,l.y1];
 }
 
-// Logical → canvas px
+// コース上の位置tにおける進行方向タンジェントを返す
+function pathTangent(t){
+  const{segs,total}=COURSE,dist=Math.min(t*total,total-0.001);
+  for(const s of segs){
+    if(dist<s.cum+s.d){
+      const len=s.d||1;
+      return[(s.x1-s.x0)/len,(s.y1-s.y0)/len];
+    }
+  }
+  const l=segs[segs.length-1],len=l.d||1;
+  return[(l.x1-l.x0)/len,(l.y1-l.y0)/len];
+}
+
 function sc([lx,ly]) {
   const sx=canvas.width/LW, sy=canvas.height/LH, s=Math.min(sx,sy);
   return [lx*s+(canvas.width-LW*s)/2, ly*s+(canvas.height-LH*s)/2];
@@ -229,9 +241,21 @@ function buildSwimmers(){
   swimmers=[];
   for(const g of GROUPS){
     const waves=Math.ceil(g.cnt/10);let idx=0;
+    const sigma=0.12;
+    const mu=Math.log(g.avg)-(sigma*sigma/2);
     for(let w=0;w<waves;w++){
       const wCnt=Math.min(10,g.cnt-idx),wSt=g.start+w*10;
-      for(let i=0;i<wCnt;i++){swimmers.push({gid:g.id,color:g.color,start:wSt+Math.random()*1.2,swimT:Math.max(g.avg*0.48,g.avg+randn()*g.sd),laps:g.laps});idx++;}
+      for(let i=0;i<wCnt;i++){
+        const swimT=Math.exp(mu+sigma*randn());
+        // 平均速度に近いほど横のレーン幅が広い（パック中央ほど広がる）
+        const speedRatio=swimT/g.avg;
+        const packFactor=Math.exp(-Math.pow(speedRatio-1.0,2)/(2*0.08*0.08));
+        // コース外側方向のみに広がる（内側＝コース内部には入らない）
+        // 時計回りコースでは左法線が外側 → lane は正値のみ
+        const lane = Math.random() * 38 * packFactor;
+        swimmers.push({gid:g.id,color:g.color,start:wSt+Math.random()*1.5,swimT,laps:g.laps,lane});
+        idx++;
+      }
     }
   }
 }
@@ -315,28 +339,45 @@ function swimmerPos(s,now){
   if(now<s.start)return null;
   const el=now-s.start;
   if(el>=s.swimT)return'done';
-  return pathAt((el/s.swimT*s.laps)%1);
+  const frac=(el/s.swimT*s.laps)%1;
+  return frac; // fracを返す（位置はdrawSwimmers内で計算）
 }
 const hidden=new Set();
+
 function drawSwimmers(now){
   let inW=0,stC=0,fnC=0;
+
+  ctx.save();
+  ctx.globalCompositeOperation='source-over';
+
   for(const s of swimmers){
     if(hidden.has(s.gid))continue;
-    const p=swimmerPos(s,now);
-    if(!p)continue;
-    if(p==='done'){stC++;fnC++;continue;}
+    const frac=swimmerPos(s,now);
+    if(frac===null)continue;
+    if(frac==='done'){stC++;fnC++;continue;}
     stC++;inW++;
-    const[px,py]=sc(p);
-    const gr=ctx.createRadialGradient(px,py,0,px,py,7);
-    gr.addColorStop(0,s.color+'bb');gr.addColorStop(1,s.color+'00');
-    ctx.beginPath();ctx.arc(px,py,7,0,Math.PI*2);ctx.fillStyle=gr;ctx.fill();
-    ctx.beginPath();ctx.arc(px,py,2.5,0,Math.PI*2);ctx.fillStyle=s.color;ctx.fill();
+
+    // コース上の基準位置
+    const[lx,ly]=pathAt(frac);
+    // 反時計回りコース → 右法線(ty,-tx)が外側
+    const[tx,ty]=pathTangent(frac);
+    const nx=ty, ny=-tx;
+    // 外側方向にlane分ずらした論理座標（内側・ブイ内には入らない）
+    const rx=lx+s.lane*nx;
+    const ry=ly+s.lane*ny;
+    const[px,py]=sc([rx,ry]);
+
+    // フラットな塗りつぶしドット（発光なし）
+    ctx.beginPath();ctx.arc(px,py,3,0,Math.PI*2);
+    ctx.fillStyle=s.color;ctx.fill();
   }
+  ctx.restore();
+
   return{inW,stC,fnC};
 }
 
 // ── Sim
-let simT=SIM_S,playing=false,speed=10,lastMs=null;
+let simT=T(9,10),playing=false,speed=10,lastMs=null;
 
 function frame(ms){
   if(playing&&lastMs!==null){
