@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>館山わかしお スイム分布</title>
+<title>A-URA | 館山わかしお スイム分布</title>
 <style>
   :root {
     --bg:    #071520;
@@ -104,8 +104,8 @@
 <body>
 
 <div id="hdr">
-  <h1>館山わかしおトライアスロン 2024 — スイム分布</h1>
-  <p>第15回 (2024.5.26) リザルトデータより速度分布再現 / STD・Sprint</p>
+  <h1>A-URA — 館山わかしおトライアスロン 2026 スイム分布</h1>
+  <p>第17回 (2026.5.24) リザルトデータより速度分布再現 / STD・Sprint ※年齢ブロック区分は2024年構造を推定適用</p>
 </div>
 
 <div id="canvasWrap"><canvas id="c"></canvas></div>
@@ -177,12 +177,19 @@ window.addEventListener('orientationchange', () => setTimeout(layout, 200));
 
 // ── Course (user-confirmed coords, logical 620×520)
 const WP = [
-  [308, 453],  // Start/Finish
-  [450, 150],  // 右ブイ 280m
-  [323,  50],  // 奥右ブイ
-  [198, 148],  // 奥左ブイ
-  [308, 453],  // 閉じる
+  [141, 424],  // Start/Finish
+  [332, 143],  // 右ブイ 280m
+  [267,  40],  // 奥右ブイ
+  [159,  94],  // 奥左ブイ
+  [141, 424],  // 閉じる
 ];
+
+// 小ブイ（長い辺の中間目印）＋試泳ブイ
+const SMALL_BUOYS = [
+  { pos:[242,278], label:'小ブイ①' },  // Start→右ブイ 中間
+  { pos:[151,248], label:'小ブイ②' },  // 奥左ブイ→Start 中間
+];
+const TRIAL_BUOY = { pos:[360,351], label:'試泳' };
 
 function buildSegs(pts) {
   const segs=[]; let cum=0;
@@ -204,7 +211,7 @@ function pathAt(t) {
 }
 
 // コース重心（4ブイの平均）
-const CENTROID = [(308+450+323+198)/4, (453+150+50+148)/4]; // ≈(320, 200)
+const CENTROID = [(141+332+267+159)/4, (424+143+40+94)/4]; // ≈(225, 175)
 
 function sc([lx,ly]) {
   const sx=canvas.width/LW, sy=canvas.height/LH, s=Math.min(sx,sy);
@@ -212,16 +219,18 @@ function sc([lx,ly]) {
 }
 
 // ── Groups
+// 2026年実データ（result_tatetora2026_20260529.pdf より直接抽出・完走者数は公式発表と一致確認済み）
+// グループ区分（年齢ブロック）は2024年の構造を推定適用（2026年の公式タイムテーブル未確認のため）
 const GROUPS=[
-  {id:'G1', label:'STD ≤44歳',    cnt:223,start:T(9,15), color:'#4caf50',avg:27*60,sd:4.0*60,laps:2},
-  {id:'G1g',label:'Guest',         cnt:4,  start:T(9,15), color:'#a5d6a7',avg:25*60,sd:3.0*60,laps:2},
-  {id:'G2', label:'STD 45-49歳',  cnt:85, start:T(9,35), color:'#42a5f5',avg:30*60,sd:4.5*60,laps:2},
-  {id:'G3', label:'STD 50-54歳',  cnt:147,start:T(10,30),color:'#ffc107',avg:31*60,sd:5.0*60,laps:2},
-  {id:'G4', label:'STD 55歳以上', cnt:176,start:T(11,0), color:'#ef5350',avg:32*60,sd:5.0*60,laps:2},
-  {id:'G5', label:'STD 女子',      cnt:72, start:T(11,39),color:'#ff9800',avg:34*60,sd:5.5*60,laps:2},
-  {id:'G6', label:'SP 男子',       cnt:159,start:T(12,35),color:'#90caf9',avg:14*60,sd:3.0*60,laps:1},
-  {id:'G7', label:'SP 女子',       cnt:42, start:T(12,49),color:'#f48fb1',avg:16*60,sd:3.5*60,laps:1},
+  {id:'G1', label:'STD ≤44歳',    cnt:196,start:T(9,15), color:'#4caf50',avg:34*60+41,sd:6*60+59,laps:2},
+  {id:'G2', label:'STD 45-49歳',  cnt:67, start:T(9,35), color:'#42a5f5',avg:35*60+26,sd:5*60+47,laps:2},
+  {id:'G3', label:'STD 50-54歳',  cnt:106,start:T(10,30),color:'#ffc107',avg:35*60+56,sd:5*60+59,laps:2},
+  {id:'G4', label:'STD 55歳以上', cnt:143,start:T(11,0), color:'#ef5350',avg:36*60+8, sd:5*60+36,laps:2},
+  {id:'G5', label:'STD 女子',      cnt:58, start:T(11,39),color:'#ff9800',avg:34*60+44,sd:6*60+49,laps:2},
+  {id:'G6', label:'SP 男子',       cnt:126,start:T(12,35),color:'#90caf9',avg:18*60+19,sd:5*60+13,laps:1},
+  {id:'G7', label:'SP 女子',       cnt:33, start:T(12,49),color:'#f48fb1',avg:17*60+11,sd:4*60+35,laps:1},
 ];
+// 合計: STD 570名 (196+67+106+143+58) / SP 159名 (126+33) ※公式完走者数と一致
 
 // ── Swimmers
 function randn(){let u,v;do{u=Math.random();}while(!u);do{v=Math.random();}while(!v);return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
@@ -254,19 +263,73 @@ function buildSwimmers(){
 function drawBG(){
   const g=ctx.createLinearGradient(0,0,0,canvas.height);
   g.addColorStop(0,'#061520');g.addColorStop(0.30,'#0b3a50');
-  g.addColorStop(0.62,'#0c4858');g.addColorStop(0.76,'#184a28');g.addColorStop(1,'#223818');
+  g.addColorStop(0.62,'#0c4858');g.addColorStop(0.80,'#0c4858');
   ctx.fillStyle=g;ctx.fillRect(0,0,canvas.width,canvas.height);
   ctx.save();ctx.globalAlpha=0.04;ctx.strokeStyle='#7ee8fa';ctx.lineWidth=1;
-  for(let y=8;y<canvas.height*0.75;y+=20){
+  for(let y=8;y<canvas.height*0.78;y+=20){
     ctx.beginPath();ctx.moveTo(0,y);
     for(let x=0;x<=canvas.width;x+=6)ctx.lineTo(x,y+Math.sin(x*0.018+y*0.06)*2.5);
     ctx.stroke();
   }
   ctx.restore();
-  const shY=canvas.height*0.795;
-  const sg=ctx.createLinearGradient(0,shY-3,0,shY+10);
-  sg.addColorStop(0,'rgba(200,155,45,0)');sg.addColorStop(0.5,'#c49030');sg.addColorStop(1,'rgba(200,155,45,0)');
-  ctx.fillStyle=sg;ctx.fillRect(0,shY-3,canvas.width,13);
+
+  // ── 沖ノ島・自衛隊基地側の海岸線（本土の斜めライン＋岬のふくらみ、ツールで確認済みの座標）──
+  const W = canvas.width, H = canvas.height;
+  const P_top      = [W*0.04, 0];
+  const P_mid      = [W*0.06, H*0.61];
+  const P_curveNear= [W*0.53, H*0.89];
+  const P_penOuter = [W*0.86, H*0.89];
+  const P_penEdge  = [W,      H*0.72];
+
+  const shorePath = () => {
+    ctx.beginPath();
+    ctx.moveTo(0,0);
+    ctx.lineTo(P_top[0], P_top[1]);
+    ctx.quadraticCurveTo((P_top[0]+P_mid[0])/2, (P_top[1]+P_mid[1])/2 - 10, P_mid[0], P_mid[1]);
+    ctx.quadraticCurveTo((P_mid[0]+P_curveNear[0])/2 - 10, (P_mid[1]+P_curveNear[1])/2, P_curveNear[0], P_curveNear[1]);
+    ctx.quadraticCurveTo((P_curveNear[0]+P_penOuter[0])/2, (P_curveNear[1]+P_penOuter[1])/2 - 8, P_penOuter[0], P_penOuter[1]);
+    ctx.quadraticCurveTo((P_penOuter[0]+P_penEdge[0])/2, (P_penOuter[1]+P_penEdge[1])/2, P_penEdge[0], P_penEdge[1]);
+    ctx.lineTo(W, H);
+    ctx.lineTo(0, H);
+    ctx.closePath();
+  };
+
+  ctx.save();
+  shorePath();
+  const landGrad = ctx.createLinearGradient(0,0,W,H);
+  landGrad.addColorStop(0, '#a98a48');
+  landGrad.addColorStop(0.5, '#8a8048');
+  landGrad.addColorStop(1, '#3a5a28');
+  ctx.fillStyle = landGrad;
+  ctx.fill();
+  ctx.restore();
+
+  // 岩・松林のテクスチャ
+  ctx.save();
+  shorePath();
+  ctx.clip();
+  for (let i=0;i<30;i++){
+    const rx = (i*37) % W;
+    const ry = (i*53) % H;
+    ctx.beginPath();
+    ctx.ellipse(rx, ry, 5+((i*7)%6), 3+((i*5)%4), i*0.4, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(10,25,8,0.4)';
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // 波打ち際のハイライト線
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(P_top[0], P_top[1]);
+  ctx.quadraticCurveTo((P_top[0]+P_mid[0])/2, (P_top[1]+P_mid[1])/2 - 10, P_mid[0], P_mid[1]);
+  ctx.quadraticCurveTo((P_mid[0]+P_curveNear[0])/2 - 10, (P_mid[1]+P_curveNear[1])/2, P_curveNear[0], P_curveNear[1]);
+  ctx.quadraticCurveTo((P_curveNear[0]+P_penOuter[0])/2, (P_curveNear[1]+P_penOuter[1])/2 - 8, P_penOuter[0], P_penOuter[1]);
+  ctx.quadraticCurveTo((P_penOuter[0]+P_penEdge[0])/2, (P_penOuter[1]+P_penEdge[1])/2, P_penEdge[0], P_penEdge[1]);
+  ctx.stroke();
+  ctx.restore();
 }
 
 function arrowAt(ax,ay,bx,by,f,sz){
@@ -276,9 +339,30 @@ function arrowAt(ax,ay,bx,by,f,sz){
   ctx.restore();
 }
 
+function drawSmallBuoys(){
+  // 小ブイ（長い辺の中間目印、水色の小さい三角）
+  for(const sb of SMALL_BUOYS){
+    const [bx,by]=sc(sb.pos);
+    ctx.beginPath();
+    ctx.moveTo(bx,by-6);ctx.lineTo(bx+5,by+4);ctx.lineTo(bx-5,by+4);
+    ctx.closePath();
+    ctx.fillStyle='#80deea';ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.7)';ctx.lineWidth=1;ctx.stroke();
+  }
+  // 試泳ブイ（オレンジ系の小さい三角）
+  const [tx,ty]=sc(TRIAL_BUOY.pos);
+  ctx.beginPath();
+  ctx.moveTo(tx,ty-6);ctx.lineTo(tx+5,ty+4);ctx.lineTo(tx-5,ty+4);
+  ctx.closePath();
+  ctx.fillStyle='#ffab91';ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.7)';ctx.lineWidth=1;ctx.stroke();
+  ctx.font='9px Helvetica Neue';ctx.fillStyle='rgba(255,255,255,0.7)';ctx.textAlign='center';
+  ctx.fillText('試泳',tx,ty-10);ctx.textAlign='left';
+}
+
 function drawCourse(){
   const pts=WP.map(p=>sc(p));
-  const [ps,p1,p2,p3]=pts;
+  const [ps,p1,p2,p3]=pts; // Start, 右ブイ, 奥右ブイ, 奥左ブイ
 
   ctx.save();ctx.globalAlpha=0.07;
   ctx.beginPath();ctx.moveTo(...ps);ctx.lineTo(...p1);ctx.lineTo(...p2);ctx.lineTo(...p3);ctx.closePath();
@@ -323,6 +407,8 @@ function drawCourse(){
   ctx.beginPath();ctx.arc(sx,sy,4,0,Math.PI*2);ctx.fillStyle='#ef5350';ctx.fill();
   ctx.font='bold 11px Helvetica Neue';ctx.fillStyle='rgba(255,255,255,0.88)';ctx.textAlign='center';
   ctx.fillText('START / FINISH',sx,sy+20);ctx.textAlign='left';
+
+  drawSmallBuoys();
 }
 
 function swimmerPos(s,now){
